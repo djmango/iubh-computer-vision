@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "iubh-computer-vision"
+version = "0.1.0"
+description = "IUBH Computer Vision project, evalulate cutting edge of open-source computer vision models"
+authors = ["Sulaiman Ghori <sulaiman.ghori@outlook.com>"]
+readme = "README.md"
+packages = [{include = "iubh_computer_vision"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+transformers = "^4.29.2"
+torch = "^2.0.1"
+pillow = "^9.5.0"
+timm = "^0.9.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

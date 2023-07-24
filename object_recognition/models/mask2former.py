@@ -26,7 +26,7 @@ class Mask2FormerObjectRecognition(ObjectRecognition):
         predicted_panoptic_map_np = np.array(predicted_panoptic_map)
 
         # Format the results in the required schema
-        results: list[ObjectDetectionSegment] = []
+        result_segments: list[ObjectDetectionSegment] = []
         for segment in segments_info:
             # Obtain the id, label, score for each segment
             id = segment["id"]
@@ -44,12 +44,11 @@ class Mask2FormerObjectRecognition(ObjectRecognition):
             ymax, xmax = np.max(coords, axis=1)
             bbox = [xmin, ymin, xmax, ymax]
 
-            results.append(ObjectDetectionSegment(
+            result_segments.append(ObjectDetectionSegment(
                 label=label_name,
                 confidence=score,
                 bounding_box=bbox,
-                class_id=label_id,
             ))
 
-        return results
+        return result_segments
 

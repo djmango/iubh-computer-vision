@@ -4,7 +4,6 @@ import requests
 import torch
 from transformers import AutoImageProcessor, Mask2FormerForUniversalSegmentation
 
-
 # load Mask2Former fine-tuned on COCO panoptic segmentation
 processor = AutoImageProcessor.from_pretrained("facebook/mask2former-swin-base-coco-panoptic")
 model: Mask2FormerForUniversalSegmentation = Mask2FormerForUniversalSegmentation.from_pretrained("facebook/mask2former-swin-base-coco-panoptic") # type: ignore

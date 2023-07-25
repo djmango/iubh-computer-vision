@@ -1,3 +1,5 @@
+from fuzzywuzzy import fuzz
+
 from object_recognition.dataset import categories, limited_dataset
 from object_recognition.models import (
     DetrResnetObjectRecognition,
@@ -24,18 +26,25 @@ def calculate_metrics(predictions: list[list[ObjectDetectionSegment]], ground_tr
     true_positives = 0
     false_positives = 0
     false_negatives = 0
+    similarity_threshold = 85  # You may need to adjust this threshold based on your requirements
     
     for prediction, ground_truth in zip(predictions, ground_truths):
         predicted_labels = [segment.label for segment in prediction]
         ground_truth_labels = [segment.label for segment in ground_truth]
         
-        true_positives += len(set(predicted_labels).intersection(ground_truth_labels))
-        false_positives += len(set(predicted_labels) - set(ground_truth_labels))
-        false_negatives += len(set(ground_truth_labels) - set(predicted_labels))
+        for predicted_label in predicted_labels:
+            if any(fuzz.ratio(predicted_label, ground_truth_label) > similarity_threshold for ground_truth_label in ground_truth_labels):
+                true_positives += 1
+            else:
+                false_positives += 1
+                
+        for ground_truth_label in ground_truth_labels:
+            if not any(fuzz.ratio(ground_truth_label, predicted_label) > similarity_threshold for predicted_label in predicted_labels):
+                false_negatives += 1
     
-    precision = true_positives / (true_positives + false_positives)
-    recall = true_positives / (true_positives + false_negatives)
-    f1_score = 2 * ((precision * recall) / (precision + recall))
+    precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
+    recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) > 0 else 0
+    f1_score = 2 * ((precision * recall) / (precision + recall)) if (precision + recall) > 0 else 0
     
     return precision, recall, f1_score
 

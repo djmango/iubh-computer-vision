@@ -2,6 +2,7 @@ from PIL import Image
 import torch
 from transformers import AutoImageProcessor, AutoModelForObjectDetection
 
+from object_recognition.device import device
 from object_recognition.models.abstract import ObjectRecognition
 from object_recognition.schemas.segment import ObjectDetectionSegment
 
@@ -10,26 +11,36 @@ class YolosObjectRecognition(ObjectRecognition):
         self.model_name = model_name
         self.processor = AutoImageProcessor.from_pretrained(self.model_name)
         self.model = AutoModelForObjectDetection.from_pretrained(self.model_name)
+        self.model.to(device) # type: ignore
 
-    def run_model(self, image: Image.Image) -> list[ObjectDetectionSegment]:
-        inputs = self.processor(images=image, return_tensors="pt")
+    def run_model(self, images: list[Image.Image]) -> list[list[ObjectDetectionSegment]]:
+        # Convert images to float tensors and normalize if necessary
+        inputs = self.processor(images=images, return_tensors="pt")
+
+        # Move the tensors to the device
+        inputs = {name: tensor.to(device) for name, tensor in inputs.items()}
 
         with torch.no_grad():
             outputs = self.model(**inputs)
 
         # convert outputs (bounding boxes and class logits) to COCO API
-        target_sizes = torch.tensor([image.size[::-1]])
-        results = self.processor.post_process_object_detection(outputs, threshold=0.9, target_sizes=target_sizes)[0]
-        result_segments: list[ObjectDetectionSegment] = []
-        for score, label, bounding_box in zip(results["scores"], results["labels"], results["boxes"]): # type: ignore
-            label = self.model.config.id2label[label.item()] # type: ignore
-            confidence = round(score.item(), 3)
-            bounding_box = [round(i, 2) for i in bounding_box.tolist()]
-            result_segments.append(ObjectDetectionSegment(
-                label=label,
-                confidence=confidence,
-                bounding_box=bounding_box
-            ))
+        target_sizes = [image.size[::-1] for image in images]
+        results = self.processor.post_process_object_detection(outputs, threshold=0.9, target_sizes=target_sizes)
+        results_segments: list[list[ObjectDetectionSegment]] = []
 
-        return result_segments
+        for result in results:
+            # Format results into ObjectDetectionSegment
+            result_segments: list[ObjectDetectionSegment] = []
+            for score, label, bounding_box in zip(result["scores"], result["labels"], result["boxes"]): # type: ignore
+                label = self.model.config.id2label[label.item()] # type: ignore
+                confidence = round(score.item(), 3)
+                bounding_box = [round(i, 2) for i in bounding_box.tolist()]
+                result_segments.append(ObjectDetectionSegment(
+                    label=label,
+                    confidence=confidence,
+                    bounding_box=bounding_box
+                ))
+            results_segments.append(result_segments)
+
+        return results_segments
 

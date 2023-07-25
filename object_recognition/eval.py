@@ -22,17 +22,14 @@ for name, model in models.items():
     import time
     start = time.perf_counter()
     
-    limit = 100
+    limit = 2
     limited_dataset = islice(dataset, limit)
     images = [i['image'] for i in limited_dataset]
-    # images = [image.convert("RGB").resize((1920, 1080)) for image in images]
-
-    images = images[:3]
 
     print(f"Processing {len(images)} images with {name}")
     results = model.run_model(images)
 
     print(f"Time taken: {time.perf_counter() - start:.3f}s")
     model.print_results(results[0])
-    model.display_results(results[0], images[0])
+    # model.display_results(results[0], images[0])
 

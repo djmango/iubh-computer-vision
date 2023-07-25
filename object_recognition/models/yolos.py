@@ -13,7 +13,9 @@ class YolosObjectRecognition(ObjectRecognition):
 
     def run_model(self, image: Image.Image) -> list[ObjectDetectionSegment]:
         inputs = self.processor(images=image, return_tensors="pt")
-        outputs = self.model(**inputs)
+
+        with torch.no_grad():
+            outputs = self.model(**inputs)
 
         # convert outputs (bounding boxes and class logits) to COCO API
         target_sizes = torch.tensor([image.size[::-1]])

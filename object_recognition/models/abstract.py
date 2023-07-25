@@ -21,7 +21,7 @@ class ObjectRecognition(ABC):
         self.model = None
 
     @abstractmethod
-    def run_model(self, image: Image.Image) -> list['ObjectDetectionSegment']:
+    def run_model(self, images: list[Image.Image]) -> list[list['ObjectDetectionSegment']]:
         pass
 
     def print_results(self, results: list['ObjectDetectionSegment'], confidence_threshold: float = 0.9):
@@ -54,3 +54,4 @@ class ObjectRecognition(ABC):
                 plt.text(box[0], box[1], label, color=colors[result.label])
         
         plt.show()
+

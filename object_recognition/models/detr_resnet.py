@@ -14,7 +14,9 @@ class DetrResnetObjectRecognition(ObjectRecognition):
 
     def run_model(self, image: Image.Image) -> list[ObjectDetectionSegment]:
         inputs = self.processor(images=image, return_tensors="pt") # type: ignore
-        outputs = self.model(**inputs) # type: ignore
+
+        with torch.no_grad():
+            outputs = self.model(**inputs) # type: ignore
 
         # convert outputs (bounding boxes and class logits) to COCO API
         # let's only keep detections with score > 0.9
@@ -33,3 +35,4 @@ class DetrResnetObjectRecognition(ObjectRecognition):
                 bounding_box=bounding_box
             ))
         return result_segments
+

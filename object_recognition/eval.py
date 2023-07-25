@@ -1,6 +1,6 @@
 from fuzzywuzzy import fuzz
 
-from object_recognition.dataset import categories, limited_dataset
+from object_recognition.dataset import dataset
 from object_recognition.models import (
     DetrResnetObjectRecognition,
     Mask2FormerObjectRecognition,
@@ -16,7 +16,7 @@ models = {
     "DetrResnet": DetrResnetObjectRecognition("facebook/detr-resnet-50"),
 }
 
-ground_truths: list[list[ObjectDetectionSegment]] = [ObjectDetectionSegment.from_dataset(x) for x in limited_dataset]
+ground_truths: list[list[ObjectDetectionSegment]] = [ObjectDetectionSegment.from_dataset(x) for x in dataset.get_limited_dataset()]
 
 # for example in dataset:
 #     labels = [categories.int2str(x) for x in example['objects']['category']]
@@ -54,7 +54,7 @@ for name, model in models.items():
     import time
     start = time.perf_counter()
     
-    images = [i['image'] for i in limited_dataset]
+    images = [i['image'] for i in dataset.get_limited_dataset()]
 
     print(f"Processing {len(images)} images with {name}")
     results = model.run_model(images)

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from object_recognition.dataset import categories
+from object_recognition.dataset import dataset
 
 class ObjectDetectionSegment(BaseModel):
     """ Schema for object detection segment, includes:
@@ -33,6 +33,7 @@ class ObjectDetectionSegment(BaseModel):
          """
          
         image_segments: list[cls] = []
+        categories = dataset.get_categories()
         for obj in range(len(dataset['objects']['bbox'])):
             label = categories.int2str(dataset['objects']['category'][obj]) # assuming you have the categories object
             bounding_box = dataset['objects']['bbox'][obj] # Coco bounding box format is [xmin, ymin, width, height]

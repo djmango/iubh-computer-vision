@@ -19,6 +19,7 @@ torchvision = { url = "https://download.pytorch.org/whl/nightly/cpu/torchvision-
 torchaudio = { url = "https://download.pytorch.org/whl/nightly/cpu/torchaudio-2.1.0.dev20230725-cp311-cp311-macosx_11_0_arm64.whl" }
 fuzzywuzzy = "^0.18.0"
 python-levenshtein = "^0.21.1"
+opencv-python = "^4.8.0.74"
 
 
 [build-system]

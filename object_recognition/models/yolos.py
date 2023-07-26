@@ -1,5 +1,4 @@
 from PIL import Image
-import torch
 from transformers import AutoImageProcessor, AutoModelForObjectDetection
 
 from object_recognition.device import device
@@ -7,27 +6,17 @@ from object_recognition.models.abstract import ObjectRecognition
 from object_recognition.schemas.segment import ObjectDetectionSegment
 
 class YolosObjectRecognition(ObjectRecognition):
-    def __init__(self, model_name):
+    def __init__(self, model_name: str = "hustvl/yolos-tiny"):
         self.model_name = model_name
         self.processor = AutoImageProcessor.from_pretrained(self.model_name)
         self.model = AutoModelForObjectDetection.from_pretrained(self.model_name)
         self.model.to(device) # type: ignore
 
     def run_model(self, images: list[Image.Image]) -> list[list[ObjectDetectionSegment]]:
-        # Convert images to float tensors and normalize if necessary
-        inputs = self.processor(images=images, return_tensors="pt")
+        """ Run the model on the images and return the results """
 
-        # Move the tensors to the device
-        inputs = {name: tensor.to(device) for name, tensor in inputs.items()}
-
-        with torch.no_grad():
-            outputs = self.model(**inputs)
-
-        # convert outputs (bounding boxes and class logits) to COCO API
-        target_sizes = [image.size[::-1] for image in images]
-        results = self.processor.post_process_object_detection(outputs, threshold=0.9, target_sizes=target_sizes)
+        results = self.run_model_on_batches(images)
         results_segments: list[list[ObjectDetectionSegment]] = []
-
         for result in results:
             # Format results into ObjectDetectionSegment
             result_segments: list[ObjectDetectionSegment] = []

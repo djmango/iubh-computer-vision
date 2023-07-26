@@ -8,26 +8,16 @@ from object_recognition.schemas.segment import ObjectDetectionSegment
 
 
 class DetrResnetObjectRecognition(ObjectRecognition):
-    def __init__(self, model_name):
+    def __init__(self, model_name: str = "facebook/detr-resnet-50"):
         self.model_name = model_name
         self.processor = DetrImageProcessor.from_pretrained(self.model_name)
         self.model = DetrForObjectDetection.from_pretrained(self.model_name)
         self.model.to(device) # type: ignore
 
     def run_model(self, images: list[Image.Image]) -> list[list[ObjectDetectionSegment]]:
-        # Convert images to float tensors and normalize if necessary
-        inputs = self.processor(images=images, return_tensors="pt") # type: ignore
+        """ Run the model on the images and return the results """
+        results = self.run_model_on_batches(images)
 
-        # Move the tensors to the device
-        inputs = {name: tensor.to(device) for name, tensor in inputs.items()}
-
-        with torch.no_grad():
-            outputs = self.model(**inputs) # type: ignore
-
-        # convert outputs (bounding boxes and class logits) to COCO API
-        # let's only keep detections with score > 0.9
-        target_sizes = [image.size[::-1] for image in images]
-        results = self.processor.post_process_object_detection(outputs, target_sizes=target_sizes, threshold=0.9) # type: ignore
         results_segments: list[list[ObjectDetectionSegment]] = []
 
         for result in results:

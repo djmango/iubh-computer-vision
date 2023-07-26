@@ -13,7 +13,7 @@ class ObjectDetectionSegment(BaseModel):
     confidence: float = Field(..., description="Confidence of object")
 
     @classmethod
-    def from_dataset(cls, dataset):
+    def from_dataset(cls, dataset_image):
         """
         From the HuggingFace Dataset format to our pydantic format for ease of use and simplicity
         {
@@ -34,9 +34,9 @@ class ObjectDetectionSegment(BaseModel):
          
         image_segments: list[cls] = []
         categories = dataset.get_categories()
-        for obj in range(len(dataset['objects']['bbox'])):
-            label = categories.int2str(dataset['objects']['category'][obj]) # assuming you have the categories object
-            bounding_box = dataset['objects']['bbox'][obj] # Coco bounding box format is [xmin, ymin, width, height]
+        for obj in range(len(dataset_image['objects']['bbox'])):
+            label = categories.int2str(dataset_image['objects']['category'][obj]) # assuming you have the categories object
+            bounding_box = dataset_image['objects']['bbox'][obj] # Coco bounding box format is [xmin, ymin, width, height]
             bounding_box[2] += bounding_box[0] # Convert width to xmax
             bounding_box[3] += bounding_box[1] # Convert height to ymax
             confidence = 0 # There is no confidence in the dataset

@@ -2,10 +2,10 @@ from itertools import islice
 
 from datasets import load_dataset
 
-limit = 10
+limit = 1000
 
 class Dataset():
-    def __init__(self, limit=10):
+    def __init__(self, limit):
         self.limit = limit
         self.dataset = None
         self.categories = None
@@ -13,7 +13,7 @@ class Dataset():
 
     def get_dataset(self):
         if not self.dataset:
-            self.dataset = load_dataset("detection-datasets/coco", split="val", streaming=True)
+            self.dataset = load_dataset("detection-datasets/coco", split="val", streaming=True, verification_mode="no_checks", save_infos=True)
 
         return self.dataset
     

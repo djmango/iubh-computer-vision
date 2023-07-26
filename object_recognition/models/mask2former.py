@@ -8,26 +8,16 @@ from object_recognition.models import ObjectRecognition
 from object_recognition.schemas import ObjectDetectionSegment
 
 class Mask2FormerObjectRecognition(ObjectRecognition):
-    def __init__(self, model_name):
+    def __init__(self, model_name: str = "facebook/mask2former-swin-base-coco-panoptic"):
         self.model_name = model_name
         self.processor = AutoImageProcessor.from_pretrained(self.model_name)
         self.model = Mask2FormerForUniversalSegmentation.from_pretrained(self.model_name)
         self.model.to(device) # type: ignore
 
     def run_model(self, images: list[Image.Image]) -> list[list[ObjectDetectionSegment]]:
-        # Convert images to float tensors and normalize if necessary
-        inputs = self.processor(images=images, return_tensors="pt")
+        """ Run the model on the images and return the results """
+        results = self.run_model_on_batches(images)
 
-        # Move the tensors to the device
-        inputs = {name: tensor.to(device) for name, tensor in inputs.items()}
-
-        # Run the model
-        with torch.no_grad():
-            outputs = self.model(**inputs) # type: ignore
-
-        # Post process the outputs
-        target_sizes = [image.size[::-1] for image in images]
-        results = self.processor.post_process_panoptic_segmentation(outputs, target_sizes=target_sizes)
         results_segments: list[list[ObjectDetectionSegment]] = []
         for result in results:
             predicted_panoptic_map = result["segmentation"]

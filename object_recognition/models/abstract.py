@@ -1,12 +1,37 @@
 from abc import ABC, abstractmethod
+import random
+import typing
+
+import torch
+from PIL import Image
 from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
-import random
+import numpy as np
 
-from PIL import Image
-import typing
+from object_recognition.device import device
 if typing.TYPE_CHECKING:
     from object_recognition.schemas import ObjectDetectionSegment
+
+def normalize_image(image: Image.Image) -> Image.Image:
+    """Normalize a PIL Image."""
+
+    if image.mode != 'RGB':
+        image = image.convert('RGB')
+
+    # Convert the image to a NumPy array
+    array = np.array(image)
+
+    # If the image is grayscale, add a channel dimension
+    if array.ndim == 2:
+        array = array[..., np.newaxis]
+
+    # Normalize the array
+    array = array / 255.0
+
+    # Convert the normalized array back to a PIL Image
+    normalized_image = Image.fromarray((array * 255).astype(np.uint8))
+
+    return normalized_image
 
 class ObjectRecognition(ABC):
     """ Abstruct model for my ObjectRecognition classes.
@@ -19,6 +44,46 @@ class ObjectRecognition(ABC):
         self.model_name = model_name
         self.processor = None
         self.model = None
+
+    def get_inputs(self, images: list[Image.Image]):
+        """ Get the inputs for the model from the images, on the device """
+        assert self.processor is not None, "Processor is not initialized"
+
+        # Convert images to float tensors and normalize if necessary
+        images_normalized = [normalize_image(image) for image in images]
+        inputs = self.processor(images=images_normalized, return_tensors="pt")
+
+        # Move the tensors to the device
+        inputs = {name: tensor.to(device) for name, tensor in inputs.items()} # type: ignore
+        return inputs
+
+    def run_model_on_batches(self, images: list[Image.Image], batch_size: int = 128) -> list:
+        assert self.model is not None, "Model is not initialized"
+        assert self.processor is not None, "Processor is not initialized"
+        results = []
+        
+        # Split images into batches
+        for i in range(0, len(images), batch_size):
+            batch_images = images[i:i + batch_size]
+
+            inputs = self.get_inputs(batch_images)
+
+            # Run the model
+            with torch.no_grad():
+                outputs = self.model(**inputs)
+
+            # Post process the outputs
+            target_sizes = [image.size[::-1] for image in batch_images]
+
+            if self.model_name == "facebook/mask2former-swin-base-coco-panoptic":
+                batch_results = self.processor.post_process_panoptic_segmentation(outputs, target_sizes=target_sizes)
+            else:
+                batch_results = self.processor.post_process_object_detection(outputs, threshold=0.9, target_sizes=target_sizes)
+
+            # Save batch results
+            results.extend(batch_results)
+
+        return results
 
     @abstractmethod
     def run_model(self, images: list[Image.Image]) -> list[list['ObjectDetectionSegment']]:

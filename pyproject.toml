@@ -14,14 +14,15 @@ matplotlib = "^3.7.1"
 scipy = "^1.11.1"
 pydantic = "^2.0.3"
 datasets = {version = "^2.14.0", extras = ["vision"]}
-torch = { url = "https://download.pytorch.org/whl/nightly/cpu/torch-2.1.0.dev20230725-cp311-none-macosx_11_0_arm64.whl" }
-torchvision = { url = "https://download.pytorch.org/whl/nightly/cpu/torchvision-0.16.0.dev20230725-cp311-cp311-macosx_11_0_arm64.whl" }
-torchaudio = { url = "https://download.pytorch.org/whl/nightly/cpu/torchaudio-2.1.0.dev20230725-cp311-cp311-macosx_11_0_arm64.whl" }
+# torch = { url = "https://download.pytorch.org/whl/nightly/cpu/torch-2.1.0.dev20230725-cp311-none-macosx_11_0_arm64.whl" }
+# torchvision = { url = "https://download.pytorch.org/whl/nightly/cpu/torchvision-0.16.0.dev20230725-cp311-cp311-macosx_11_0_arm64.whl" }
 fuzzywuzzy = "^0.18.0"
 python-levenshtein = "^0.21.1"
 opencv-python = "^4.8.0.74"
 pandas = "^2.0.3"
 openpyxl = "^3.1.2"
+torch = "^2.0.1"
+torchvision = "^0.15.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

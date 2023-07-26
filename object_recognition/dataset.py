@@ -2,7 +2,7 @@ from itertools import islice
 
 from datasets import IterableDataset, load_dataset
 
-limit = 1000
+limit = 10
 
 class Dataset():
     def __init__(self, limit):

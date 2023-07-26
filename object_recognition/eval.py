@@ -15,7 +15,7 @@ from object_recognition.models import (
 from object_recognition.schemas.segment import ObjectDetectionSegment
 
 HERE = Path(__file__).parent
-EVAL_FOLDER = HERE.parent / "eval"
+EVAL_FOLDER = HERE.parent / "eval" / datetime.now().strftime("%Y-%m-%d %H-%M-%S")
 
 
 def calculate_metrics(predictions: list[list[ObjectDetectionSegment]], ground_truths: list[list[ObjectDetectionSegment]]):
@@ -92,14 +92,14 @@ for name, model in models.items():
     # Combine metrics and run info
     total_results_df = pd.concat([run_info_df, metrics_df], axis=1)
 
+    # Create folder if it doesn't exist
+    (EVAL_FOLDER).mkdir(parents=True, exist_ok=True)
+
     # Create a new ExcelWriter object
-    writer = pd.ExcelWriter(EVAL_FOLDER/f'{run_info_df["timestamp"].values[0]}'/f'{name}_total_results.xlsx', engine='openpyxl')  # type: ignore
+    writer = pd.ExcelWriter(EVAL_FOLDER/f'{name}_results.xlsx', engine='openpyxl')  # type: ignore
 
     # Write total results to the first sheet
-    total_results_df.to_excel(writer, sheet_name='Total_Results', index=False)
-
-    # Write metrics to the second sheet
-    metrics_df.to_excel(writer, sheet_name='Metrics', index=False)
+    total_results_df.to_excel(writer, sheet_name='Overall_Results', index=False)
 
     # Create a DataFrame for all image results
     all_image_results_df = pd.DataFrame()
@@ -109,7 +109,7 @@ for name, model in models.items():
         image_df['image_index'] = idx
         all_image_results_df = pd.concat([all_image_results_df, image_df], ignore_index=True)
 
-    # Write all image results to the third sheet
+    # Write all image results to another sheet
     all_image_results_df.to_excel(writer, sheet_name='All_Image_Results', index=False)
 
     # Save and close the writer

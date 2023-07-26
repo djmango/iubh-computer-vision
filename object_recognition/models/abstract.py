@@ -69,7 +69,7 @@ class ObjectRecognition(ABC):
         images_iter = (x['image'] for x in dataset.limited_dataset)
 
         def _inference_batch(self, batch_images):
-            print(f"Running batch {batch_count} size: ({batch_count}) with {self.model_name}")
+            print(f"Running batch {batch_count} size: ({batch_size}) with {self.model_name}")
             inputs = self.get_inputs(batch_images)
 
             # Run the model

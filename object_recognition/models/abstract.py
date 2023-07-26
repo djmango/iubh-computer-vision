@@ -1,13 +1,15 @@
 from abc import ABC, abstractmethod
+import gc
 import random
 import typing
 
-import torch
 from PIL import Image
 from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 
+from object_recognition.dataset import Dataset
 from object_recognition.device import device
 if typing.TYPE_CHECKING:
     from object_recognition.schemas import ObjectDetectionSegment
@@ -57,15 +59,17 @@ class ObjectRecognition(ABC):
         inputs = {name: tensor.to(device) for name, tensor in inputs.items()} # type: ignore
         return inputs
 
-    def run_model_on_batches(self, images: list[Image.Image], batch_size: int = 128) -> list:
+    def run_model_on_batches(self, dataset: Dataset, batch_size: int = 64):
         assert self.model is not None, "Model is not initialized"
         assert self.processor is not None, "Processor is not initialized"
-        results = []
-        
-        # Split images into batches
-        for i in range(0, len(images), batch_size):
-            batch_images = images[i:i + batch_size]
+        batch_images = []
+        batch_count = 0
 
+        # Start from the first image in the limited dataset
+        images_iter = (x['image'] for x in dataset.limited_dataset)
+
+        def _inference_batch(self, batch_images):
+            print(f"Running batch {batch_count} size: ({batch_count}) with {self.model_name}")
             inputs = self.get_inputs(batch_images)
 
             # Run the model
@@ -80,10 +84,32 @@ class ObjectRecognition(ABC):
             else:
                 batch_results = self.processor.post_process_object_detection(outputs, threshold=0.9, target_sizes=target_sizes)
 
-            # Save batch results
-            results.extend(batch_results)
+            # Delete the current batch of images and outputs to free up memory
+            del batch_images
+            del inputs
+            del outputs
 
-        return results
+            # Call the garbage collector
+            gc.collect()
+
+            return batch_results
+        
+        try:
+            while True:
+                # Collect images for the batch
+                batch_images = []
+                for _ in range(batch_size):
+                    # Collect images for the next batch
+                    batch_images.append(next(images_iter))
+
+                # Run the model on the batch
+                batch_count += 1
+                yield _inference_batch(self, batch_images)
+
+        except StopIteration:
+            # The iterator has no more items. You should process the last batch if it's not empty.
+            if batch_images:
+                yield _inference_batch(self, batch_images)
 
     @abstractmethod
     def run_model(self, images: list[Image.Image]) -> list[list['ObjectDetectionSegment']]:

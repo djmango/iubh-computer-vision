@@ -1,6 +1,6 @@
 from itertools import islice
 
-from datasets import load_dataset
+from datasets import IterableDataset, load_dataset
 
 limit = 1000
 
@@ -9,12 +9,12 @@ class Dataset():
         self.limit = limit
         self.dataset = None
         self.categories = None
-        self.limited_dataset = None
 
-    def get_dataset(self):
+    def get_dataset(self) -> IterableDataset:
         if not self.dataset:
-            self.dataset = load_dataset("detection-datasets/coco", split="val", streaming=True, verification_mode="no_checks", save_infos=True)
+            self.dataset = load_dataset("detection-datasets/coco", split="val", streaming=True, verification_mode="no_checks", save_infos=True, keep_in_memory=False)
 
+        assert isinstance(self.dataset, IterableDataset), "Dataset is not iterable"
         return self.dataset
     
     def get_categories(self):
@@ -24,9 +24,10 @@ class Dataset():
         return self.categories
     
     def get_limited_dataset(self):
-        if not self.limited_dataset:
-            self.limited_dataset = list(islice(self.get_dataset(), self.limit))
-
-        return self.limited_dataset
+        pass
+    
+    @property
+    def limited_dataset(self):
+        return islice(self.get_dataset(), self.limit)
 
 dataset = Dataset(limit=limit)

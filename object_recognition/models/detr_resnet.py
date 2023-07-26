@@ -1,5 +1,4 @@
 from PIL import Image
-import torch
 from transformers import DetrForObjectDetection, DetrImageProcessor
 
 from object_recognition.device import device

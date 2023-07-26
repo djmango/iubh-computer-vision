@@ -7,27 +7,16 @@ from fuzzywuzzy import fuzz
 import pandas as pd
 
 from object_recognition.dataset import dataset
-import psutil
 from object_recognition.models import (
     DetrResnetObjectRecognition,
     Mask2FormerObjectRecognition,
     YolosObjectRecognition,
 )
-from object_recognition.models.abstract import ObjectRecognition
 from object_recognition.schemas.segment import ObjectDetectionSegment
-from object_recognition.system_monitor import SystemMonitor
 
 HERE = Path(__file__).parent
 EVAL_FOLDER = HERE.parent / "eval"
 
-# Create an instance of each class and process the image
-models = {
-    "Mask2Former": Mask2FormerObjectRecognition(),
-    "Yolos": YolosObjectRecognition(),
-    "DetrResnet": DetrResnetObjectRecognition(),
-}
-
-ground_truths: list[list[ObjectDetectionSegment]] = [ObjectDetectionSegment.from_dataset(x) for x in dataset.get_limited_dataset()]
 
 def calculate_metrics(predictions: list[list[ObjectDetectionSegment]], ground_truths: list[list[ObjectDetectionSegment]]):
     true_positives = 0
@@ -65,46 +54,46 @@ def calculate_metrics(predictions: list[list[ObjectDetectionSegment]], ground_tr
     
     return metrics_df
 
-def get_run_info(start_time, monitor: SystemMonitor):
+def get_run_info(start_time):
     run_time = time.perf_counter() - start_time
     system_info = platform.uname()
-    cpu_avg, mem_avg = monitor.get_avg_usage()
 
     run_info_df = pd.DataFrame({
         'run_time': run_time,
-        'cpu_usage': cpu_avg,
-        'mem_usage': mem_avg,
         'system_info': str(system_info),
         'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }, index=[0])
 
     return run_info_df
 
+# Store a reference to each model
+models = {
+    "Mask2Former": Mask2FormerObjectRecognition,
+    "Yolos": YolosObjectRecognition,
+    "DetrResnet": DetrResnetObjectRecognition,
+}
+
 for name, model in models.items():
-    model: ObjectRecognition
+    model = model()
     start = time.perf_counter()
     
-    images = [i['image'] for i in dataset.get_limited_dataset()]
-    print(f"Processing {len(images)} images with {name}")
-    
-    monitor = SystemMonitor()
-    monitor.start()
-
-    results = model.run_model(images)
+    print(f"Inferencing images with {name}")
+    results = model.run_model(dataset)
     print(f"Time taken: {time.perf_counter() - start:.3f}s")
-    monitor.stop()
 
     # Calculate metrics
+    ground_truths: list[list[ObjectDetectionSegment]] = [ObjectDetectionSegment.from_dataset(x) for x in dataset.limited_dataset]
     metrics_df = calculate_metrics(results, ground_truths)
+    del ground_truths
 
     # Get run info
-    run_info_df = get_run_info(start, monitor)
+    run_info_df = get_run_info(start)
 
     # Combine metrics and run info
     total_results_df = pd.concat([run_info_df, metrics_df], axis=1)
 
     # Create a new ExcelWriter object
-    writer = pd.ExcelWriter(EVAL_FOLDER/f'{name}_total_results.xlsx', engine='openpyxl')  # type: ignore
+    writer = pd.ExcelWriter(EVAL_FOLDER/f'{run_info_df["timestamp"].values[0]}'/f'{name}_total_results.xlsx', engine='openpyxl')  # type: ignore
 
     # Write total results to the first sheet
     total_results_df.to_excel(writer, sheet_name='Total_Results', index=False)
@@ -127,3 +116,4 @@ for name, model in models.items():
     writer.close()
 
     print(f"Precision: {metrics_df['precision'].values[0]:.3f}, Recall: {metrics_df['recall'].values[0]:.3f}, F1 Score: {metrics_df['f1_score'].values[0]:.3f}")
+    del model

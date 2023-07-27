@@ -68,7 +68,7 @@ def get_run_info(start_time):
 
 # Store a reference to each model
 models = {
-    "Mask2Former": Mask2FormerObjectRecognition,
+    # "Mask2Former": Mask2FormerObjectRecognition,
     "Yolos": YolosObjectRecognition,
     "DetrResnet": DetrResnetObjectRecognition,
 }

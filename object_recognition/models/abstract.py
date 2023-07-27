@@ -63,7 +63,7 @@ class ObjectRecognition(ABC):
         assert self.model is not None, "Model is not initialized"
         assert self.processor is not None, "Processor is not initialized"
         batch_images = []
-        batch_count = 0
+        batch_count = -1 # Because we increment it before the first batch
 
         # Start from the first image in the limited dataset
         images_iter = (x['image'] for x in dataset.limited_dataset)

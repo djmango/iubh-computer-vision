@@ -1,6 +1,8 @@
+from typing import Iterable
+
+from PIL import Image
 from transformers import DetrForObjectDetection, DetrImageProcessor
 
-from object_recognition.dataset import Dataset
 from object_recognition.device import device
 from object_recognition.models.abstract import ObjectRecognition
 from object_recognition.schemas.segment import ObjectDetectionSegment
@@ -13,9 +15,9 @@ class DetrResnetObjectRecognition(ObjectRecognition):
         self.model = DetrForObjectDetection.from_pretrained(self.model_name)
         self.model.to(device) # type: ignore
 
-    def run_model(self, dataset: Dataset) -> list[list[ObjectDetectionSegment]]:
+    def run_model(self, images: Iterable[Image.Image]) -> list[list[ObjectDetectionSegment]]:
         """ Run the model on the images and return the results """
-        results = self.run_model_on_batches(dataset)
+        results = self.run_model_on_batches(images)
 
         results_segments: list[list[ObjectDetectionSegment]] = []
 

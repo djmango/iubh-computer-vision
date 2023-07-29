@@ -68,7 +68,7 @@ def get_run_info(start_time):
 
 # Store a reference to each model
 models = {
-    # "Mask2Former": Mask2FormerObjectRecognition,
+    "Mask2Former": Mask2FormerObjectRecognition,
     "Yolos": YolosObjectRecognition,
     "DetrResnet": DetrResnetObjectRecognition,
 }
@@ -78,7 +78,7 @@ for name, model in models.items():
     start = time.perf_counter()
     
     print(f"Inferencing images with {name}")
-    results = model.run_model(dataset)
+    results = model.run_model([x['image'] for x in dataset.limited_dataset])
     print(f"Time taken: {time.perf_counter() - start:.3f}s")
 
     # Calculate metrics

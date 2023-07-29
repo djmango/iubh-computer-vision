@@ -1,9 +1,14 @@
-import cv2
+from pathlib import Path
+
 from PIL import Image
+import cv2
+
 from object_recognition.models import YolosObjectRecognition
 
+HERE = Path(__file__).parent
+
 # Initialize the model
-model = YolosObjectRecognition("hustvl/yolos-tiny")
+model = YolosObjectRecognition()
 
 # Open the video stream (use '0' for webcam input, or replace with a video file path)
 cap = cv2.VideoCapture(0)
@@ -19,7 +24,7 @@ while True:
         frame_pil = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         
         # Run the model
-        results = model.run_model([frame_pil])
+        results = model.run_model(iter([frame_pil]))
 
          # Draw the results onto the frame
         for segment in results[0]:

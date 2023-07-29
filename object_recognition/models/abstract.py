@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from object_recognition.dataset import Dataset
 from object_recognition.device import device
 if typing.TYPE_CHECKING:
     from object_recognition.schemas import ObjectDetectionSegment
@@ -59,14 +58,11 @@ class ObjectRecognition(ABC):
         inputs = {name: tensor.to(device) for name, tensor in inputs.items()} # type: ignore
         return inputs
 
-    def run_model_on_batches(self, dataset: Dataset, batch_size: int = 64):
+    def run_model_on_batches(self, images_iter: typing.Iterable[Image.Image], batch_size: int = 64):
         assert self.model is not None, "Model is not initialized"
         assert self.processor is not None, "Processor is not initialized"
         batch_images = []
         batch_count = -1 # Because we increment it before the first batch
-
-        # Start from the first image in the limited dataset
-        images_iter = (x['image'] for x in dataset.limited_dataset)
 
         def _inference_batch(self, batch_images):
             print(f"Running batch {batch_count} size: ({batch_size}) with {self.model_name}")
@@ -100,7 +96,7 @@ class ObjectRecognition(ABC):
                 batch_images = []
                 for _ in range(batch_size):
                     # Collect images for the next batch
-                    batch_images.append(next(images_iter))
+                    batch_images.append(next(images_iter)) # type: ignore
 
                 # Run the model on the batch
                 batch_count += 1
